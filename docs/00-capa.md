@@ -6,13 +6,14 @@
 
 | Item | Valor |
 |---|---|
-| Autor(a) | _a preencher_ |
-| Disciplina / turma | _a preencher_ |
+| Autor | Gabriel Ferreira Miquelin |
+| RA | 207912-25 |
+| Turma | ADS2 |
 | Repositório | <https://github.com/secundariamiquelin/trabalho-devops> |
 | Endereço público do app | _a preencher (http://IP-público/)_ |
 | Data de entrega | _a preencher_ |
 
-> **PENDENTE:** preencher a tabela acima com nome, turma e endereço público antes de gerar o PDF final.
+> **PENDENTE:** preencher o endereço público e a data de entrega.
 
 **Como este documento foi produzido:** os capítulos foram escritos em Markdown, na pasta `docs/` do repositório. O script `scripts/build-pdf.mjs` junta todos num único PDF (`npm run pdf`). Ele converte o Markdown com a biblioteca `marked`, desenha os diagramas Mermaid num navegador sem interface (Edge ou Chrome, controlado pelo `puppeteer-core`) e imprime em A4. Títulos, blocos de código e imagens saem iguais aos do Markdown.
 
