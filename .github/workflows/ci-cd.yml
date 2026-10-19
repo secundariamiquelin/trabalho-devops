@@ -1,0 +1,114 @@
+name: CI/CD
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+# The default token can only read the repository.
+permissions:
+  contents: read
+
+# Two pushes in a row never deploy at the same time; the second waits.
+concurrency:
+  group: ci-cd-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  test:
+    name: Test and build
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Check out the code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Unit and site tests
+        run: npm test
+
+      - name: Lint the server scripts
+        run: shellcheck infra/*.sh tests/infra/*.sh
+
+      - name: Test the release switch script
+        run: bash tests/infra/activate-release.test.sh
+
+      - name: Validate the nginx config
+        run: |
+          sudo mkdir -p /var/www/2048/current
+          printf 'events {}\nhttp {\n  include %s;\n}\n' "$PWD/infra/nginx/2048.conf" > /tmp/nginx-test.conf
+          sudo nginx -t -c /tmp/nginx-test.conf
+
+      - name: Build
+        run: npm run build
+
+      - name: Keep the build for the deploy job
+        uses: actions/upload-artifact@v4
+        with:
+          name: site
+          path: dist/
+          retention-days: 7
+
+  deploy:
+    name: Deploy to Oracle Cloud
+    needs: test
+    # Only pushes to main deploy, and only once the server exists (repository variable).
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main' && vars.DEPLOY_ENABLED == 'true'
+    runs-on: ubuntu-24.04
+    environment:
+      name: production
+      url: ${{ vars.APP_URL }}
+    env:
+      SSH_HOST: ${{ secrets.SSH_HOST }}
+      APP_URL: ${{ vars.APP_URL }}
+    steps:
+      - name: Check out the deploy scripts
+        uses: actions/checkout@v4
+
+      - name: Download the build
+        uses: actions/download-artifact@v4
+        with:
+          name: site
+          path: dist/
+
+      - name: Configure SSH with the pipeline key
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+          SSH_KNOWN_HOSTS: ${{ secrets.SSH_KNOWN_HOSTS }}
+        run: |
+          install -d -m 700 ~/.ssh
+          # tr strips CR: a key pasted from Windows may carry CRLF, which OpenSSH rejects.
+          printf '%s\n' "$SSH_PRIVATE_KEY" | tr -d '\r' > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          # Pinned host key: the connection fails instead of trusting an unknown server.
+          printf '%s\n' "$SSH_KNOWN_HOSTS" | tr -d '\r' > ~/.ssh/known_hosts
+          printf 'Host app-server\n  HostName %s\n  User deploy\n  IdentityFile ~/.ssh/deploy_key\n  IdentitiesOnly yes\n  StrictHostKeyChecking yes\n' "$SSH_HOST" > ~/.ssh/config
+
+      - name: Upload the release
+        run: |
+          RELEASE="${GITHUB_SHA::7}"
+          rsync -az --delete dist/ "app-server:/var/www/2048/releases/$RELEASE/"
+
+      - name: Activate the release
+        run: ssh app-server 'bash -s' -- activate "${GITHUB_SHA::7}" < infra/activate-release.sh
+
+      - name: Health check (rolls back on failure)
+        run: |
+          RELEASE="${GITHUB_SHA::7}"
+          for attempt in 1 2 3 4 5 6 7 8 9 10; do
+            served="$(curl -fsS --max-time 5 "$APP_URL/version.txt" || true)"
+            if [ "$served" = "$RELEASE" ]; then
+              echo "Release $RELEASE is live at $APP_URL"
+              exit 0
+            fi
+            echo "Attempt $attempt: server answered '${served:-nothing}', expected '$RELEASE'"
+            sleep 3
+          done
+          echo "::error::Health check failed; rolling back to the previous release"
+          ssh app-server 'bash -s' -- rollback < infra/activate-release.sh
+          exit 1

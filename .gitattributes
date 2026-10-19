@@ -1,0 +1,7 @@
+# Keep LF everywhere: shell scripts and nginx config are copied to a Linux
+# server, and a CRLF there breaks bash ("$'\r': command not found").
+* text=auto eol=lf
+*.png binary
+*.ico binary
+*.eot binary
+*.woff binary
