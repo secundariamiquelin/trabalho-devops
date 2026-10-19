@@ -4,9 +4,11 @@
 
 Montar uma rede em que o servidor seja alcançável só nas portas de que o app precisa: 80 para o site e 22 para administração e deploy. Nenhuma outra porta deve ficar aberta.
 
+> **NÃO EXECUTADO:** como a conta na Oracle não foi criada (capítulo 02), a rede não foi montada. Este capítulo traz os conceitos, o projeto da rede, o diagrama, as regras e o passo a passo que seria seguido. Os recortes do console não existem.
+
 ## Conceitos, com minhas palavras
 
-**Compartment.** Uma pasta lógica dentro da conta, onde ficam os recursos. Serve para organizar e para controlar acesso e custo: políticas de IAM, cotas e budgets podem ser aplicados a um compartment. Criei um compartment só para o trabalho. Assim tudo o que pertence a ele fica junto, e no fim é fácil conferir se algo foi esquecido ([Oracle, *Setting up your tenancy*](https://docs.oracle.com/en-us/iaas/Content/GSG/Concepts/settinguptenancy.htm)).
+**Compartment.** Uma pasta lógica dentro da conta, onde ficam os recursos. Serve para organizar e para controlar acesso e custo: políticas de IAM, cotas e budgets podem ser aplicados a um compartment. O projeto prevê um compartment só para o trabalho. Assim tudo o que pertence a ele fica junto, e no fim é fácil conferir se algo foi esquecido ([Oracle, *Setting up your tenancy*](https://docs.oracle.com/en-us/iaas/Content/GSG/Concepts/settinguptenancy.htm)).
 
 **VCN (Virtual Cloud Network).** A rede privada virtual da conta dentro da região, equivalente à rede de um escritório, mas definida por software. Tem uma faixa de endereços (CIDR) da qual saem os IPs das máquinas. Nada entra nem sai dela sem um gateway ([Networking overview](https://docs.oracle.com/en-us/iaas/Content/Network/Concepts/overview.htm)).
 
@@ -18,7 +20,7 @@ Montar uma rede em que o servidor seja alcançável só nas portas de que o app 
 
 **Security list.** O firewall da nuvem, aplicado a todas as placas de rede (VNICs) da subnet. Tem regras de entrada e de saída ([Security lists](https://docs.oracle.com/en-us/iaas/Content/Network/Concepts/securitylists.htm)).
 
-**Regra de entrada (ingress) e de saída (egress).** Ingress é o tráfego que **chega** à máquina, como um visitante abrindo o site. Egress é o tráfego que **sai** dela, como o servidor baixando atualizações. Uma regra *stateful* lembra a conexão: se a entrada na porta 80 é permitida, a resposta sai sem precisar de regra de saída própria. Uma regra *stateless* não lembra, e o tráfego de volta precisa de outra regra ([Security rules](https://docs.oracle.com/en-us/iaas/Content/Network/Concepts/securityrules.htm)). Usei só regras stateful.
+**Regra de entrada (ingress) e de saída (egress).** Ingress é o tráfego que **chega** à máquina, como um visitante abrindo o site. Egress é o tráfego que **sai** dela, como o servidor baixando atualizações. Uma regra *stateful* lembra a conexão: se a entrada na porta 80 é permitida, a resposta sai sem precisar de regra de saída própria. Uma regra *stateless* não lembra, e o tráfego de volta precisa de outra regra ([Security rules](https://docs.oracle.com/en-us/iaas/Content/Network/Concepts/securityrules.htm)). O projeto usa só regras stateful.
 
 **Network Security Group (NSG).** Uma alternativa à security list, aplicada por VNIC em vez de por subnet. A Oracle recomenda NSG quando há máquinas com papéis diferentes na mesma subnet. Aqui há uma única máquina, então a security list basta e é mais fácil de explicar ([NSG](https://docs.oracle.com/en-us/iaas/Content/Network/Concepts/networksecuritygroups.htm)).
 
@@ -47,13 +49,13 @@ flowchart TB
   IGW --> RT --> SL --> VM
 ```
 
-## Passo a passo no console
+## Passo a passo no console (planejado)
 
 Todos os passos no compartment `trabalho-devops`, região São Paulo.
 
 1. **Compartment:** **Identity & Security**, **Compartments**, **Create Compartment**. Nome `trabalho-devops`, pai: root.
 2. **VCN:** **Networking**, **Virtual Cloud Networks**, **Create VCN** (a criação manual, não o assistente). Nome `vcn-2048`, IPv4 CIDR `10.0.0.0/16`, DNS habilitado.
-   - Não usei o assistente "VCN with Internet Connectivity" porque ele cria também subnet privada, NAT Gateway e Service Gateway, que este app não usa.
+   - O assistente "VCN with Internet Connectivity" porque ele cria também subnet privada, NAT Gateway e Service Gateway, que este app não usa. Por isso a criação manual.
 3. **Internet Gateway:** dentro da VCN, **Internet Gateways**, **Create**. Nome `igw-2048`.
 4. **Route table:** na **Default Route Table** da VCN, **Add Route Rules**. Destino `0.0.0.0/0`, alvo: Internet Gateway `igw-2048`.
 5. **Security list:** dentro da VCN, **Security Lists**, **Create**. Nome `sl-publica`, com as regras da tabela abaixo.
@@ -80,25 +82,14 @@ Todas stateful.
 
 ## Evidências
 
-![VCN vcn-2048 com CIDR 10.0.0.0/16](img/cap03-vcn.png)
-
-> **PENDENTE:** recorte da página da VCN mostrando nome, CIDR e o Internet Gateway.
-
-![Subnet pública subnet-publica](img/cap03-subnet.png)
-
-> **PENDENTE:** recorte da subnet mostrando CIDR `10.0.0.0/24`, tipo pública e a security list associada.
-
-![Security list sl-publica com as regras de entrada](img/cap03-security-list.png)
-
-> **PENDENTE:** recorte das regras de entrada da `sl-publica`.
+> **NÃO EXECUTADO:** evidências previstas: recortes do console da VCN (nome, CIDR e Internet Gateway), da subnet (CIDR `10.0.0.0/24`, tipo pública e security list associada) e das regras de entrada da `sl-publica`.
 
 ## Registro
 
 - **Objetivo:** rede com só as portas 22 e 80 abertas para a internet.
-- **O que fiz:** criei o compartment, a VCN, o Internet Gateway, a regra de rota, a security list e a subnet pública, nessa ordem.
-- **Decisão:** porta 22 aberta para qualquer origem, por causa do GitHub Actions. Compensei com SSH só por chave, endurecido no capítulo 05.
-
-> **PENDENTE:** registrar o que deu errado ao montar a rede (por exemplo: subnet criada sem associar a `sl-publica`, regra de rota faltando) e como foi corrigido.
+- **O que fiz:** estudei os conceitos e projetei a rede: compartment, VCN, Internet Gateway, regra de rota, security list e subnet pública, nessa ordem de criação.
+- **Decisão:** porta 22 aberta para qualquer origem, por causa do GitHub Actions. A compensação é SSH só por chave, endurecido no capítulo 05.
+- **O que não fiz:** a rede não foi criada, porque não há conta. Não há erros de execução a registrar. Os erros mais prováveis seriam uma subnet sem a `sl-publica` associada e a falta da regra de rota para o Internet Gateway.
 
 ## Fontes
 
@@ -108,4 +99,4 @@ Todas stateful.
 - Oracle. *Security lists.* <https://docs.oracle.com/en-us/iaas/Content/Network/Concepts/securitylists.htm>
 - Oracle. *Security rules.* <https://docs.oracle.com/en-us/iaas/Content/Network/Concepts/securityrules.htm>
 - Oracle. *Network security groups.* <https://docs.oracle.com/en-us/iaas/Content/Network/Concepts/networksecuritygroups.htm>
-- **Uso de IA:** o Claude (Anthropic) redigiu as explicações e o diagrama a partir da documentação. Revisei e montei a rede no console.
+- **Uso de IA:** o Claude (Anthropic) redigiu as explicações e o diagrama a partir da documentação. Revisei o texto. A rede não foi montada.

@@ -6,6 +6,8 @@
 // Evidence still to be collected is written in the chapters as a blockquote that
 // starts with **PENDENTE:**. Those blocks and images whose file does not exist yet
 // are highlighted in red, and `npm run pending` lists them without building.
+// Steps that were planned but deliberately not executed are written as a blockquote
+// that starts with **NÃO EXECUTADO:** and are highlighted in amber.
 //
 // Browser: set CHROME_PATH, or the script tries the usual Edge/Chrome locations.
 import { existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from "node:fs";
@@ -18,6 +20,7 @@ const DOCS = join(ROOT, "docs");
 const BUILD = join(ROOT, "build");
 const OUTPUT = join(ROOT, "trabalho-devops.pdf");
 const PENDING_MARK = "PENDENTE:";
+const NOT_RUN_MARK = "NÃO EXECUTADO";
 
 const BROWSER_CANDIDATES = [
   process.env.CHROME_PATH,
@@ -93,7 +96,11 @@ function renderMarkdown(files) {
       },
       blockquote({ tokens }) {
         const body = this.parser.parse(tokens);
-        const cls = body.includes(`<strong>${PENDING_MARK}</strong>`) ? ' class="pending"' : "";
+        const cls = body.includes(`<strong>${PENDING_MARK}</strong>`)
+          ? ' class="pending"'
+          : body.includes(`<strong>${NOT_RUN_MARK}`) // also matches "NÃO EXECUTADO (em parte):"
+            ? ' class="not-run"'
+            : "";
         return `<blockquote${cls}>\n${body}</blockquote>\n`;
       },
     },

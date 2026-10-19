@@ -4,6 +4,8 @@
 
 Fazer com que um `git push` na branch `main` leve a mudança ao servidor sem que eu entre nele: testar, gerar o build, enviar, ativar e conferir, tudo pelo GitHub Actions.
 
+> **NÃO EXECUTADO (em parte):** o repositório, o workflow e a parte de **CI** existem e rodam de verdade no GitHub Actions. A parte de **CD** (envio ao servidor) não chegou a rodar: sem conta na Oracle não há servidor, então os segredos de acesso não foram cadastrados e o job de deploy fica sempre como *skipped*. Esse comportamento é o previsto no workflow enquanto a variável `DEPLOY_ENABLED` não existe.
+
 ## Repositório
 
 **Link:** <https://github.com/secundariamiquelin/trabalho-devops>
@@ -106,7 +108,9 @@ Arquivo: [`.github/workflows/ci-cd.yml`](../.github/workflows/ci-cd.yml).
 - `concurrency`: dois pushes seguidos não fazem deploy ao mesmo tempo; o segundo espera o primeiro.
 - `environment: production`: o deploy aparece na página **Deployments** do repositório, com o link do app.
 
-## Segredos usados e como foram protegidos
+## Segredos previstos e como seriam protegidos
+
+Nenhum dos segredos abaixo foi cadastrado, porque não existe servidor para receber o deploy. A tabela é o projeto.
 
 | Nome | Tipo | Conteúdo | Proteção |
 |---|---|---|---|
@@ -120,7 +124,7 @@ Arquivo: [`.github/workflows/ci-cd.yml`](../.github/workflows/ci-cd.yml).
 
 **Nada sensível fica no repositório.** O `.gitignore` bloqueia arquivos de chave (`*_key`, `id_*`, `*.pem`), e os Secrets não são entregues a workflows disparados por forks ([Using secrets](https://docs.github.com/en/actions/how-tos/write-workflows/choose-what-workflows-do/use-secrets)). Secrets não podem ser usados em condições `if:` de job; por isso a chave liga/desliga é uma **variable** ([Contexts](https://docs.github.com/en/actions/reference/workflows-and-actions/contexts)).
 
-### Como cadastrar (PowerShell, com o GitHub CLI autenticado)
+### Como cadastrar (planejado; PowerShell com o GitHub CLI autenticado)
 
 ```powershell
 $IP = "<IP-PUBLICO>"
@@ -128,7 +132,7 @@ $IP = "<IP-PUBLICO>"
 # 1. Chave privada do pipeline (criada no capítulo 05)
 Get-Content -Raw "$env:USERPROFILE\.ssh\gha_deploy_2048" | gh secret set SSH_PRIVATE_KEY
 
-# 2. Chave do servidor: obter e CONFERIR com a que aceitei no primeiro login (capítulo 04)
+# 2. Chave do servidor: obter e CONFERIR com a aceita no primeiro login (capítulo 04)
 ssh-keyscan -t ed25519 $IP | Out-File -Encoding ascii known_hosts_server.txt   # ">" gravaria UTF-16 no PowerShell 5.1
 ssh-keygen -lf known_hosts_server.txt                       # impressão digital obtida agora
 ssh-keygen -lF $IP -f "$env:USERPROFILE\.ssh\known_hosts"   # impressão digital do primeiro login
@@ -142,17 +146,19 @@ gh variable set APP_URL --body "http://$IP"
 gh variable set DEPLOY_ENABLED --body "true"
 ```
 
-![Tela Settings > Secrets and variables > Actions com os nomes dos secrets (valores nunca aparecem)](img/cap08-secrets.png)
-
-> **PENDENTE:** recorte da página de Secrets do repositório (o GitHub mostra só os nomes).
+> **NÃO EXECUTADO:** evidência prevista: recorte da página Settings > Secrets and variables > Actions com os nomes dos segredos (o GitHub nunca mostra os valores).
 
 ## Execução com sucesso
 
-![Aba Actions: execução com os dois jobs verdes](img/cap08-actions-sucesso.png)
+As execuções abaixo são reais. Em todas, o job **Test and build** passou: 10 testes, `shellcheck`, teste do script de release, `nginx -t` e build. O job **Deploy to Oracle Cloud** aparece como pulado (ícone de proibido), porque `DEPLOY_ENABLED` não está definida. É o comportamento esperado sem servidor.
 
-> **PENDENTE:** recorte de uma execução em que **Test and build** e **Deploy to Oracle Cloud** terminaram em verde, com o passo do health check aberto mostrando "Release ... is live".
+![Execução real do workflow: Test and build verde e Deploy to Oracle Cloud pulado](img/cap08-actions-ci-verde.png)
 
-## Falha tratada
+![Lista de execuções reais na aba Actions, todas com sucesso](img/cap08-actions-lista.png)
+
+> **NÃO EXECUTADO:** evidência prevista: execução com os **dois** jobs verdes e o passo de health check mostrando "Release ... is live". Depende do servidor.
+
+## Falha tratada (planejada)
 
 **Cenário:** um commit que quebra uma regra do jogo. Por exemplo, remover `&& !next.mergedFrom` em `app/js/game_manager.js`, o que deixa uma peça se fundir duas vezes na mesma jogada.
 
@@ -160,16 +166,16 @@ gh variable set DEPLOY_ENABLED --body "true"
 
 1. O job **Test and build** falha no passo *Unit and site tests*: "a tile created by a merge does not merge again in the same move".
 2. O job **Deploy** aparece como **skipped**: nada é enviado ao servidor.
-3. O site continua no ar, na versão anterior.
+3. O site continuaria no ar, na versão anterior.
 4. **Correção:** `git revert` do commit, novo push e pipeline verde.
 
 O pipeline também trata outra falha, depois do envio: se o health check não encontrar a versão nova no ar, o job faz rollback automático para a versão anterior.
 
-![Aba Actions: teste falhou e o deploy foi pulado](img/cap08-actions-falha.png)
+O mesmo comportamento do primeiro item foi comprovado localmente: com essa regra removida do código, o teste correspondente falha (capítulo 06).
 
-> **PENDENTE:** recorte da execução com o job de teste em vermelho (mostrando o teste que falhou) e o deploy como skipped. Em seguida, recorte da execução do revert em verde.
+> **NÃO EXECUTADO:** evidência prevista: recorte da execução no GitHub com o job de teste em vermelho e o deploy pulado, seguido do recorte do revert em verde. O push com falha proposital não foi feito.
 
-## Prova de deploy automático
+## Prova de deploy automático (planejada)
 
 **Mudança:** trocar o texto de introdução em `app/index.html` de "Join the numbers and get to the **2048 tile!**" para "Junte os números e chegue ao bloco **2048!**". Depois fazer commit e push, **sem entrar no servidor**.
 
@@ -184,24 +190,20 @@ git push
 | Rodapé "Versão publicada" | commit anterior | commit novo |
 | `http://<IP>/version.txt` | commit anterior | commit novo |
 
-![App antes do push (commit anterior no rodapé)](img/cap08-antes-push.png)
-
-![App depois do push (texto traduzido e commit novo no rodapé)](img/cap08-depois-push.png)
-
-> **PENDENTE:** os dois recortes acima, do navegador no IP público, com o rodapé de versão visível.
+> **NÃO EXECUTADO:** evidência prevista: dois recortes do navegador no IP público, antes e depois do push, com o rodapé de versão visível. Sem servidor, não há o que mostrar.
 
 ## Registro
 
 - **Objetivo:** push na `main` leva a mudança ao servidor, com teste antes e possibilidade de rollback.
-- **O que fiz:** escrevi o workflow com dois jobs, uma chave SSH exclusiva, o host fixado em `known_hosts`, o health check com rollback e o teste do script de release no próprio CI.
+- **O que fiz:** criei o repositório público e escrevi o workflow com dois jobs, uma chave SSH exclusiva, o host fixado em `known_hosts`, o health check com rollback e o teste do script de release no próprio CI. A parte de CI rodou com sucesso nas três execuções feitas até agora.
 - **O que deu errado:**
   - O teste do script de release não roda no Windows: o Git Bash não cria links simbólicos sem privilégio de administrador ("Operation not permitted").
   - O `node --test tests/` do Node 22 não aceita uma pasta como argumento ("Cannot find module").
 - **Como corrigi:**
   - O teste do script de release roda só no runner Linux do GitHub, que é onde ele importa.
   - Troquei o argumento do `node --test` pelo padrão `"tests/**/*.test.mjs"`.
-
-> **PENDENTE:** acrescentar o que deu errado nas primeiras execuções reais do pipeline (por exemplo: `Host key verification failed`, `Permission denied (publickey)`, health check esgotando as tentativas) e como foi resolvido.
+- **Aviso recebido:** o GitHub informa que `actions/checkout@v4`, `setup-node@v4` e `upload-artifact@v4` usam Node 20, que está descontinuado, e por isso roda essas actions em Node 24. Não quebra a execução. A correção seria atualizar as actions para as versões atuais.
+- **O que não fiz:** não cadastrei segredos, não liguei o deploy e não fiz os pushes de prova (falha tratada e antes/depois), porque não há servidor.
 
 ## Fontes
 
@@ -211,4 +213,4 @@ git push
 - GitHub. *Contexts reference.* <https://docs.github.com/en/actions/reference/workflows-and-actions/contexts>
 - GitHub. *Managing environments for deployment.* <https://docs.github.com/en/actions/how-tos/deploy/configure-and-manage-deployments/manage-environments>
 - OpenSSH. *sshd(8)*, seção AUTHORIZED_KEYS (opção `restrict`). <https://man.openbsd.org/sshd#AUTHORIZED_KEYS_FILE_FORMAT>
-- **Uso de IA:** o Claude (Anthropic) escreveu o workflow, os scripts e este capítulo. Revisei, cadastrei os segredos e executei os pushes de prova.
+- **Uso de IA:** o Claude (Anthropic) escreveu o workflow, os scripts e este capítulo. O repositório foi criado e o CI rodou. O deploy não foi executado.

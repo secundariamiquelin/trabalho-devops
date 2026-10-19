@@ -4,7 +4,9 @@
 
 Deixar o acesso à conta protegido e o gasto monitorado antes de existir qualquer recurso. A conta é a raiz de tudo: quem entra nela pode criar máquinas, abrir portas e, se ela for convertida em paga, gerar cobrança.
 
-## Cadastro
+> **NÃO EXECUTADO:** este capítulo é o planejamento da etapa. Decidi não criar a conta na Oracle Cloud, então nenhum dos passos abaixo foi feito e não há recortes de tela da conta. O roteiro, as escolhas e as justificativas estão completos. As evidências que cada passo produziria estão listadas onde entrariam.
+
+## Cadastro (roteiro planejado)
 
 1. Acessar <https://www.oracle.com/cloud/free/> e clicar em **Start for free**.
 2. Informar país, nome e e-mail, e confirmar o e-mail.
@@ -13,13 +15,11 @@ Deixar o acesso à conta protegido e o gasto monitorado antes de existir qualque
 5. Informar endereço e cartão. A Oracle faz uma autorização temporária de US$ 1, que é estornada, só para validar o cartão ([Oracle, *Changing the payment method*](https://docs.oracle.com/en-us/iaas/Content/Billing/Tasks/changingpaymentmethod.htm)). A conta fica no Free Tier e não vira paga sem um upgrade explícito.
 6. Aguardar o e-mail de conta provisionada e entrar no console.
 
-![Console da Oracle com a conta criada (dados pessoais ocultos)](img/cap02-conta-criada.png)
+> **NÃO EXECUTADO:** evidência prevista: recorte da tela inicial do console após o primeiro login, com nome, e-mail, nome da tenancy e OCIDs cobertos por tarja.
 
-> **PENDENTE:** recorte da tela inicial do console após o primeiro login. Antes de salvar, cobrir nome, e-mail, nome da tenancy e OCIDs com uma tarja.
+## Região planejada e justificativa
 
-## Região escolhida e justificativa
-
-**Região escolhida:** Brazil East (São Paulo), identificador `sa-saopaulo-1`.
+**Região planejada:** Brazil East (São Paulo), identificador `sa-saopaulo-1`.
 
 | Critério | São Paulo (`sa-saopaulo-1`) | Vinhedo (`sa-vinhedo-1`) | Regiões dos EUA |
 |---|---|---|---|
@@ -32,25 +32,21 @@ A região home não pode ser trocada porque é nela que a Oracle mantém a ident
 
 Lista oficial de regiões: [Regions and Availability Domains](https://docs.oracle.com/en-us/iaas/Content/General/Concepts/regions.htm).
 
-> **PENDENTE:** se o cadastro tiver sido feito em outra região, trocar o texto acima pela região real e ajustar a justificativa.
+## Medidas de segurança planejadas
 
-## Medidas de segurança ativadas
-
-| Medida | Como foi feito | Por quê |
+| Medida | Como fazer | Por quê |
 |---|---|---|
-| Senha forte e única | Gerada e guardada no gerenciador de senhas | Uma senha vazada de outro site não abre a conta |
+| Senha forte e única | Gerar e guardar no gerenciador de senhas | Uma senha vazada de outro site não abre a conta |
 | MFA (verificação em 2 etapas) | No primeiro login, o console pede o cadastro de um segundo fator. Registrar o app autenticador (Oracle Mobile Authenticator ou outro app TOTP) | Mesmo com a senha vazada, ninguém entra sem o celular |
-| Códigos de recuperação (bypass codes) | Gerados no perfil do usuário e guardados fora do computador | Permitem entrar se o celular for perdido. A Oracle recomenda manter o bypass habilitado |
+| Códigos de recuperação (bypass codes) | Gerar no perfil do usuário e guardar fora do computador | Permitem entrar se o celular for perdido. A Oracle recomenda manter o bypass habilitado |
 | E-mail de notificação | Conferir que os avisos de segurança e de cobrança vão para um e-mail lido de verdade | Os alertas de gasto (abaixo) só servem se alguém lê |
-| Nenhuma chave de API criada para o usuário administrador | O pipeline usa só uma chave SSH própria, no servidor (capítulo 08) | Uma chave de API do administrador vazada daria controle total da conta |
+| Nenhuma chave de API para o usuário administrador | Não criar. O pipeline usa só uma chave SSH própria, no servidor (capítulo 08) | Uma chave de API do administrador vazada daria controle total da conta |
 
 Na OCI com Identity Domains, a política de sign-on *Security Policy for OCI Console* exige MFA de todo usuário local para acessar o console ([Oracle, *MFA with identity domains*](https://docs.oracle.com/en-us/iaas/Content/Security/Reference/iam_security_topic-iam_mfa_with_identity_domains.htm); [Sign-on policy](https://docs.oracle.com/en-us/iaas/Content/Security/Reference/iam_security_topic-iam_mfa_identity_domains_signon_policy.htm)).
 
 **Caminho no console para conferir o MFA:** menu do perfil (canto superior direito), **My profile**, aba **Security** (ou **2-Step Verification**). Ali aparecem os fatores cadastrados.
 
-![Perfil do usuário com o MFA ativo](img/cap02-mfa-ativo.png)
-
-> **PENDENTE:** recorte da tela de perfil mostrando o fator de MFA cadastrado (ocultar e-mail e nome).
+> **NÃO EXECUTADO:** evidência prevista: recorte da tela de perfil mostrando o fator de MFA cadastrado, com e-mail e nome ocultos.
 
 ## Orçamento e alerta de gasto
 
@@ -70,16 +66,14 @@ Como a meta é **custo zero**, o orçamento é pequeno para que qualquer centavo
 | Regra 2: Forecast Spend, Percentage of Budget, 100% | Dispara se a projeção do mês passar de US$ 1 | Avisa antes do fim do mês. Precisa de pelo menos 3 dias de consumo para calcular |
 | Destinatário | E-mail pessoal lido diariamente | |
 
-![Budget criado com as duas regras de alerta](img/cap02-budget-alerta.png)
-
-> **PENDENTE:** recorte da tela do budget mostrando o valor de US$ 1 e as duas regras de alerta.
+> **NÃO EXECUTADO:** evidência prevista: recorte da tela do budget mostrando o valor de US$ 1 e as duas regras de alerta.
 
 ## Registro
 
 - **Objetivo:** conta protegida e com gasto monitorado antes de criar recursos.
-- **O que fiz:** cadastro com cartão de validação, região São Paulo, MFA ativo, códigos de recuperação guardados e budget de US$ 1 com dois alertas.
-
-> **PENDENTE:** registrar o que deu errado no cadastro (por exemplo: cartão recusado, verificação de e-mail ou telefone, demora no provisionamento) e como foi resolvido. Se nada deu errado, dizer isso.
+- **O que fiz:** planejei o cadastro, a região, as medidas de segurança e o budget com base na documentação oficial.
+- **O que não fiz:** não criei a conta. O cadastro exige cartão de crédito e dados pessoais, e decidi não fornecê-los. Por isso não há conta, MFA nem budget configurados, e não há problemas de execução a registrar.
+- **Consequência:** os capítulos 03, 04, 05 e 07 e a parte de deploy do 08 dependem da conta e também ficaram só no planejamento.
 
 ## Fontes
 
@@ -88,4 +82,4 @@ Como a meta é **custo zero**, o orçamento é pequeno para que qualquer centavo
 - Oracle. *Budgets overview.* <https://docs.oracle.com/en-us/iaas/Content/Billing/Concepts/budgetsoverview.htm>
 - Oracle. *Creating a budget alert rule.* <https://docs.oracle.com/en-us/iaas/Content/Billing/Tasks/create-alert-rule.htm>
 - Oracle. *MFA* (IAM security). <https://docs.oracle.com/en-us/iaas/Content/Security/Reference/iam_security_topic-IAM_MFA.htm>
-- **Uso de IA:** o Claude (Anthropic) redigiu o roteiro e a justificativa a partir da documentação oficial. Os passos no console foram executados por mim.
+- **Uso de IA:** o Claude (Anthropic) redigiu o roteiro e a justificativa a partir da documentação oficial. Nenhum passo foi executado no console.

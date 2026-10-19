@@ -4,33 +4,33 @@
 
 Fechar o ciclo: comprovar que os três objetivos funcionam, conferir que não ficou nenhum custo nem recurso esquecido e registrar limitações, riscos e aprendizados.
 
+> **NÃO EXECUTADO (em parte):** a conta na Oracle não foi criada, então os objetivos que dependem da nuvem não puderam ser comprovados. Este capítulo diz com clareza o que foi comprovado e o que ficou só no planejamento.
+
 ## Revalidação como outra pessoa
 
-Refiz o caminho seguindo só esta documentação, na ordem dos capítulos, e anotei onde precisei de algo que não estava escrito.
+A parte que não depende da nuvem foi refeita seguindo só a documentação:
 
-> **PENDENTE:** depois de refazer o roteiro, listar aqui os pontos em que a documentação estava incompleta e o que foi corrigido em cada capítulo. Se der, peça a um colega que siga o capítulo 07 e anote as dúvidas dele.
+- `npm.cmd test`: 10 testes passando;
+- `npm.cmd run build` e `npm.cmd run serve`: app abrindo em `http://127.0.0.1:8080` com o rodapé de versão;
+- push no GitHub disparando o workflow, com o CI verde.
+
+Os roteiros dos capítulos 02 a 05 e 07 não foram refeitos, porque dependem da conta na Oracle.
 
 ## Checklist dos três objetivos
 
 | # | Objetivo | Como verificar | Situação |
 |---|---|---|---|
-| 1 | **Oracle Cloud Free Tier:** conta protegida, com alerta de gasto e só recursos Always Free | Console: MFA ativo, budget de US$ 1 com 2 regras, instância E2.1.Micro com rótulo *Always Free-eligible*, custo do mês US$ 0,00 em **Billing & Cost Management > Cost Analysis** | _a preencher_ |
-| 2 | **Servidor mínimo:** só o necessário, firewall em duas camadas, SSH só por chave, app sobrevive a reboot | `iptables -L`, `sshd -T`, security list, teste de reboot (capítulo 07) | _a preencher_ |
-| 3 | **Pipeline com GitHub:** push na `main` publica sem entrar no servidor, e falha não publica | Aba Actions (sucesso e falha), rodapé de versão antes e depois | _a preencher_ |
+| 1 | **Oracle Cloud Free Tier:** conta protegida, com alerta de gasto e só recursos Always Free | Console: MFA ativo, budget de US$ 1 com 2 regras, instância E2.1.Micro com rótulo *Always Free-eligible*, custo do mês US$ 0,00 em **Billing & Cost Management > Cost Analysis** | **Não executado.** Conta não criada |
+| 2 | **Servidor mínimo:** só o necessário, firewall em duas camadas, SSH só por chave, app sobrevive a reboot | `iptables -L`, `sshd -T`, security list, teste de reboot (capítulo 07) | **Parcial.** Scripts prontos e validados no CI (`shellcheck` e `nginx -t`), mas não executados num servidor |
+| 3 | **Pipeline com GitHub:** push na `main` publica sem entrar no servidor, e falha não publica | Aba Actions (sucesso e falha), rodapé de versão antes e depois | **Parcial.** CI funcionando de verdade (3 execuções verdes). O deploy (CD) não rodou por falta de servidor |
 
-![Objetivo 1: Cost Analysis do mês mostrando custo zero](img/cap09-custo-zero.png)
+> **NÃO EXECUTADO:** evidências previstas para os objetivos 1 e 2: recorte do **Cost Analysis** com US$ 0,00 no mês e recorte do app no IP público depois do reboot.
 
-> **PENDENTE:** recorte de **Cost Analysis** (ou da página de uso do Free Tier) mostrando US$ 0,00 no mês.
-
-![Objetivo 2: app respondendo pelo IP público depois do reboot](img/cap09-servidor-ok.png)
-
-> **PENDENTE:** recorte do navegador no IP público com o app e o rodapé de versão (pode ser o mesmo do capítulo 07).
-
-![Objetivo 3: lista de execuções na aba Actions](img/cap09-pipeline-ok.png)
-
-> **PENDENTE:** recorte da lista de execuções do workflow mostrando as verdes e a falha tratada.
+![Objetivo 3 (parte de CI): execuções reais do workflow na aba Actions](img/cap08-actions-lista.png)
 
 ## Verificação de custo e recursos esquecidos
+
+Como a conta não foi criada, não existe recurso esquecido nem risco de cobrança. A tabela abaixo fica como roteiro de verificação para quando houver conta.
 
 | Verificação | Onde | Esperado |
 |---|---|---|
@@ -43,7 +43,6 @@ Refiz o caminho seguindo só esta documentação, na ordem dos capítulos, e ano
 | Status da conta | **Billing > Upgrade and Manage Payment** | Free Tier, sem upgrade |
 | Budget | **Billing > Budgets** | US$ 1, nenhum alerta disparado |
 
-> **PENDENTE:** marcar cada linha depois de conferir no console.
 
 ## Limitações do ambiente gratuito
 
@@ -62,11 +61,11 @@ Refiz o caminho seguindo só esta documentação, na ordem dos capítulos, e ano
 |---|---|---|
 | Porta 22 aberta para a internet inteira | Os runners do GitHub não têm IP fixo | (a) runner self-hosted dentro da VCN; (b) o workflow libera o IP do runner na security list pela API da OCI só durante o deploy; (c) acesso pelo OCI Bastion; (d) VPN como Tailscale ou WireGuard |
 | Tentativas de login por força bruta nos logs | Consequência da porta 22 aberta | Senha já está desativada. Dá para acrescentar `fail2ban` ou limite de taxa no iptables |
-| Chave do pipeline sem frase-senha | O pipeline não tem como digitá-la | Já mitigado: usuário sem sudo, `restrict` e escopo só em `/var/www/2048`. Melhoria: forçar um comando fixo no `authorized_keys` (`command=`) que só aceite rsync para `releases/` |
+| Chave do pipeline sem frase-senha | O pipeline não tem como digitá-la | Mitigado no projeto: usuário sem sudo, `restrict` e escopo só em `/var/www/2048`. Melhoria: forçar um comando fixo no `authorized_keys` (`command=`) que só aceite rsync para `releases/` |
 | HTTP sem TLS | Sem domínio | Usar um nome via `sslip.io` ou um domínio próprio com Let's Encrypt (`certbot --nginx`) e abrir a 443 |
 | Ações de terceiros no workflow (`actions/checkout`, etc.) | O workflow confia no código delas | Fixar as ações por hash de commit em vez de tag e ativar o Dependabot para elas |
 | Sem monitoramento externo | Se o site cair, ninguém é avisado | Monitor gratuito de uptime ou um alarme do OCI Monitoring com Notifications (Always Free) |
-| Sem cópia de segurança da configuração do servidor | O servidor é reconstruível pelos scripts | Já mitigado: `server-setup.sh` + pipeline recriam tudo. Melhoria: provisionar a rede e a instância com Terraform (OCI Resource Manager é Always Free) |
+| Sem cópia de segurança da configuração do servidor | O servidor é reconstruível pelos scripts | Mitigado no projeto: `server-setup.sh` + pipeline recriam tudo. Melhoria: provisionar a rede e a instância com Terraform (OCI Resource Manager é Always Free) |
 
 ## Aprendizados pessoais
 
@@ -77,8 +76,7 @@ Refiz o caminho seguindo só esta documentação, na ordem dos capítulos, e ano
 - Provisionaria a rede e a instância com Terraform desde o início, para que o capítulo 03 também fosse reproduzível por comando.
 - Resolveria o HTTPS logo no começo, com um nome `sslip.io`.
 - Restringiria a porta 22 com runner self-hosted ou liberação dinâmica do IP do runner.
-
-> **PENDENTE:** completar ou ajustar esta lista com a minha experiência real.
+- Testaria os scripts do servidor numa máquina virtual local com Ubuntu, para validá-los de ponta a ponta mesmo sem a nuvem.
 
 ## Declaração de uso de IA
 
@@ -88,9 +86,13 @@ Este trabalho usou o **Claude (Anthropic)**, pelo Claude Code, como assistente p
 - escolher o app e escrever o build, os testes, os scripts de servidor e o workflow;
 - escrever os rascunhos dos capítulos e o script que gera este PDF.
 
-Conferi os números da Oracle na página oficial. A execução na conta Oracle, no servidor e no GitHub (cadastro, MFA, budget, rede, instância, publicação, segredos e pushes de prova) e as capturas de tela correspondentes foram feitas por mim. As explicações foram revisadas por mim.
+O assistente também, no meu computador e com a minha autorização:
 
-> **PENDENTE:** ajustar esta declaração ao que de fato foi feito com e sem IA.
+- rodou os testes, o build e o app localmente;
+- criou o repositório público no GitHub e fez os pushes;
+- capturou as telas de páginas públicas: documentação da Oracle, repositório do 2048, app local e aba Actions.
+
+Os números da Oracle foram conferidos na página oficial. **Nada foi executado na Oracle Cloud:** não há conta, rede, instância, servidor, segredos de deploy nem endereço público. Os capítulos correspondentes descrevem o planejamento e estão marcados como não executados.
 
 ## Fontes
 

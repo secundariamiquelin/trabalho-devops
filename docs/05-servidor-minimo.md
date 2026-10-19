@@ -6,7 +6,9 @@ Instalar só o necessário para servir o app, reduzir a superfície de ataque e 
 
 Todos os passos estão no script [`infra/server-setup.sh`](../infra/server-setup.sh). Ele é **idempotente**: rodar de novo reaplica o mesmo estado, sem duplicar nada. Assim o servidor pode ser reconstruído do zero com um comando.
 
-## O que foi instalado e por quê
+> **NÃO EXECUTADO:** sem conta na Oracle não há servidor, então o script não foi rodado numa instância. O que foi verificado de verdade, no GitHub Actions (capítulo 08), é que o script passa no `shellcheck` e que a configuração do nginx passa no `nginx -t`. O comportamento descrito abaixo é o esperado, não o observado.
+
+## O que seria instalado e por quê
 
 | Pacote | Por quê |
 |---|---|
@@ -15,7 +17,7 @@ Todos os passos estão no script [`infra/server-setup.sh`](../infra/server-setup
 | `unattended-upgrades` | Aplica atualizações de segurança automaticamente, sem eu precisar entrar no servidor |
 | `iptables-persistent` | Grava as regras do firewall do sistema para que sobrevivam a um reinício. Já vem na imagem Ubuntu da OCI; o script só garante que está lá |
 
-**O que não foi instalado:**
+**O que fica de fora:**
 
 - Nem Node.js nem banco de dados: o app é estático, o build acontece no GitHub Actions e o servidor só recebe o resultado.
 - Nem `ufw`: a Oracle diz explicitamente para não usar o UFW nas imagens dela. As imagens trazem regras de firewall que permitem à instância falar com o próprio boot volume, e o UFW pode apagá-las; aí a instância não volta depois de um reboot ([Compute known issues](https://docs.oracle.com/en-us/iaas/Content/Compute/known-issues.htm)).
@@ -32,7 +34,7 @@ Todos os passos estão no script [`infra/server-setup.sh`](../infra/server-setup
 
 O nginx roda como `www-data` e só **lê** os arquivos, então um problema no nginx não dá permissão de alterar o site.
 
-## Passo a passo reproduzível
+## Passo a passo reproduzível (planejado)
 
 ### 1. No meu computador (PowerShell): criar a chave exclusiva do pipeline e enviar os scripts
 
@@ -113,25 +115,21 @@ Regras esperadas depois do script (`sudo iptables -L INPUT -n --line-numbers`):
 | 6 | ACCEPT | `tcp dpt:80 ctstate NEW` | **HTTP, adicionada pelo script** |
 | 7 | REJECT | todo o resto | Bloqueio padrão |
 
-![Saída de iptables -L INPUT no servidor](img/cap05-iptables.png)
+> **NÃO EXECUTADO:** evidência prevista: recorte da saída de `sudo iptables -L INPUT -n --line-numbers` depois do script.
 
-> **PENDENTE:** recorte da saída de `sudo iptables -L INPUT -n --line-numbers` depois do script.
-
-## Teste com página simples
+## Teste com página simples (planejado)
 
 Antes do app real, o `current` aponta para a página provisória "Servidor pronto" criada pelo script. Acessar `http://<IP-PUBLICO>/` no navegador prova que as duas camadas de firewall, o nginx e a rota estão certos.
 
-![Navegador exibindo "Servidor pronto" pelo IP público](img/cap05-http-servidor-pronto.png)
-
-> **PENDENTE:** recorte do navegador em `http://<IP-PUBLICO>/` mostrando "Servidor pronto". Se der para incluir, mostrar também a aba Rede das ferramentas do desenvolvedor com o status 200.
+> **NÃO EXECUTADO:** evidência prevista: recorte do navegador em `http://<IP-PUBLICO>/` mostrando "Servidor pronto", com o status 200 na aba Rede das ferramentas do desenvolvedor.
 
 ## Registro
 
 - **Objetivo:** servidor com o mínimo instalado, SSH endurecido, firewall em duas camadas e HTTP respondendo.
-- **O que fiz:** escrevi o script de preparação, com validações antes de cada recarga (`nginx -t` e `sshd -t`), e rodei no servidor.
-- **Cuidado tomado:** as alterações de SSH só são aplicadas depois de `sshd -t` passar, e a sessão SSH atual fica aberta até eu testar uma segunda conexão. Um erro ali me trancaria fora do servidor.
-
-> **PENDENTE:** registrar o que deu errado ao rodar o script, por exemplo a regra REJECT ausente (o script para com mensagem) ou porta 80 sem resposta, e como foi resolvido.
+- **O que fiz:** escrevi o script de preparação, com validações antes de cada recarga (`nginx -t` e `sshd -t`). Ele passou na checagem do `shellcheck` e a configuração do nginx passou no `nginx -t`, as duas no GitHub Actions.
+- **Cuidado previsto:** as alterações de SSH só são aplicadas depois de `sshd -t` passar, e a sessão SSH atual deve ficar aberta até uma segunda conexão funcionar. Um erro ali trancaria o administrador fora do servidor.
+- **O que não fiz:** não rodei o script num servidor, porque não há instância. Também não há recortes de tela do firewall nem da página de teste.
+- **Risco que não foi testado:** se a imagem não tiver a regra `REJECT` no fim da cadeia `INPUT`, o script para com uma mensagem em vez de adivinhar as regras.
 
 ## Fontes
 
@@ -139,4 +137,4 @@ Antes do app real, o `current` aponta para a página provisória "Servidor pront
 - Oracle. *Best practices for your compute instance.* <https://docs.oracle.com/en-us/iaas/Content/Compute/References/bestpracticescompute.htm>
 - nginx. *Core module and http headers documentation.* <https://nginx.org/en/docs/>
 - Ubuntu. *Automatic updates (unattended-upgrades).* <https://documentation.ubuntu.com/server/how-to/software/automatic-updates/>
-- **Uso de IA:** o Claude (Anthropic) escreveu o rascunho do script de preparação e a explicação. Revisei e executei o script.
+- **Uso de IA:** o Claude (Anthropic) escreveu o rascunho do script de preparação e a explicação. Revisei o script. Ele não foi executado num servidor.

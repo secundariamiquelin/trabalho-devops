@@ -2,7 +2,12 @@
 
 ## Objetivo
 
-Publicar o 2048 no servidor fazendo à mão exatamente o que o pipeline fará depois. Assim cada passo automatizado no capítulo 08 tem um equivalente que eu já executei e entendi.
+Publicar o 2048 no servidor fazendo à mão exatamente o que o pipeline fará depois. Assim cada passo automatizado no capítulo 08 tem um equivalente manual que pode ser executado e entendido.
+
+> **NÃO EXECUTADO:** sem conta na Oracle não há servidor, então a publicação manual, o teste de reinício e o acesso externo não foram feitos e não existe endereço público. O que foi executado de verdade:
+>
+> - o build e o app rodando localmente (capítulo 06);
+> - o script de ativação de versão, testado no GitHub Actions numa pasta temporária, cobrindo ativação, rollback, recusa de versão inexistente, recusa de `../../etc` e limpeza de versões antigas (capítulo 08).
 
 ## Estrutura no servidor
 
@@ -17,7 +22,7 @@ Publicar o 2048 no servidor fazendo à mão exatamente o que o pipeline fará de
 
 Publicar uma versão é: (1) copiar os arquivos para uma pasta nova em `releases/` e (2) apontar `current` para ela. A troca do link é **atômica**: o script cria o link novo ao lado e o renomeia por cima do antigo (`mv -T`). Não existe um instante em que o site esteja pela metade ou sem página.
 
-## Passo a passo manual
+## Passo a passo manual (planejado)
 
 ### 1. No meu computador (PowerShell): testar, gerar o build e enviar
 
@@ -69,7 +74,7 @@ O app não depende de nenhum processo iniciado à mão nem de terminal aberto:
 
 Fechar o terminal SSH não afeta nada, porque nenhum desses processos pertence à sessão SSH.
 
-**Teste de reinício:**
+**Teste de reinício (planejado):**
 
 ```bash
 sudo reboot
@@ -81,32 +86,27 @@ curl.exe -s "http://<IP-PUBLICO>/version.txt"
 ssh -i $KEY "ubuntu@${IP}" "systemctl is-active nginx; uptime"
 ```
 
-![Saída mostrando o uptime de poucos minutos e o app respondendo depois do reboot](img/cap07-apos-reboot.png)
-
-> **PENDENTE:** recorte do terminal com `uptime` (poucos minutos) e `curl` devolvendo o commit depois do `sudo reboot`.
+> **NÃO EXECUTADO:** evidência prevista: recorte do terminal com `uptime` (poucos minutos) e `curl` devolvendo o commit depois do `sudo reboot`.
 
 ## Endereço público e acesso de fora da minha rede
 
-**Endereço:** `http://<IP-PUBLICO>/`
+**Endereço:** não existe, porque o servidor não foi criado.
 
-> **PENDENTE:** trocar `<IP-PUBLICO>` pelo IP real aqui e na capa.
+**Como seria comprovado:** abrir o endereço no celular **com o Wi-Fi desligado**, usando a rede móvel da operadora. Assim o acesso não passa pela rede de casa nem da faculdade.
 
-Para provar o acesso de fora da minha rede, abri o endereço no celular **com o Wi-Fi desligado**, usando a rede móvel da operadora. Assim o acesso não passa pela rede de casa nem da faculdade.
-
-![2048 aberto no celular pela rede móvel (Wi-Fi desligado)](img/cap07-acesso-externo.png)
-
-> **PENDENTE:** captura de tela do celular com o app aberto pelo IP público e o indicador de rede móvel (4G/5G) visível na barra de status.
+> **NÃO EXECUTADO:** evidência prevista: captura de tela do celular com o app aberto pelo IP público e o indicador de rede móvel (4G/5G) visível na barra de status.
 
 ## Registro
 
 - **Objetivo:** publicar à mão, entender cada passo e garantir que o app sobrevive a reinícios.
-- **O que fiz:** build local, cópia por `scp`, ativação com o script de release, teste de reboot e acesso pela rede móvel.
-
-> **PENDENTE:** registrar o que deu errado (por exemplo: permissão negada ao copiar para `/var/www`, `activate-release: release ... was not uploaded`, navegador mostrando a versão antiga por cache) e como foi resolvido.
+- **O que fiz:** escrevi o roteiro manual e o script de ativação, e rodei o build e o app localmente.
+- **O que deu errado:** o teste do script de ativação não roda no Windows. O Git Bash não cria links simbólicos sem privilégio de administrador ("Operation not permitted").
+- **Como corrigi:** o teste passou a rodar só no runner Linux do GitHub Actions, onde passou.
+- **O que não fiz:** não publiquei em servidor, não fiz o teste de reinício e não fiz o acesso externo, porque não há conta na Oracle.
 
 ## Fontes
 
 - systemd. *systemctl(1)* (`enable`, `is-active`). <https://www.freedesktop.org/software/systemd/man/latest/systemctl.html>
 - GNU Coreutils. *mv invocation* (opção `-T`). <https://www.gnu.org/software/coreutils/manual/html_node/mv-invocation.html>
 - Ubuntu. *netfilter-persistent(8).* <https://manpages.ubuntu.com/manpages/noble/man8/netfilter-persistent.8.html>
-- **Uso de IA:** o Claude (Anthropic) escreveu o script de ativação e o roteiro. Executei a publicação e os testes.
+- **Uso de IA:** o Claude (Anthropic) escreveu o script de ativação e o roteiro. A publicação em servidor não foi executada.

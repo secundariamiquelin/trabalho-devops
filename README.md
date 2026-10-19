@@ -1,8 +1,8 @@
 # Trabalho DevOps: 2048 na Oracle Cloud com deploy automático
 
-O jogo [2048](https://github.com/gabrielecirulli/2048) (licença MIT) publicado numa VM Always Free da Oracle Cloud e atualizado pelo GitHub Actions a cada push na `main`.
+O jogo [2048](https://github.com/gabrielecirulli/2048) (licença MIT), com infraestrutura planejada para uma VM Always Free da Oracle Cloud e pipeline do GitHub Actions. A parte de CI roda a cada push na `main`; a infraestrutura e o deploy não foram executados.
 
-- **App no ar:** _a preencher_ (`http://<IP-PUBLICO>/`)
+- **App no ar:** não publicado. A conta na Oracle Cloud não foi criada, então a infraestrutura e o deploy ficaram só no planejamento. O CI roda normalmente.
 - **Documentação:** nove capítulos em [`docs/`](docs/), exportados para `trabalho-devops.pdf`
 
 ## Estrutura
@@ -36,7 +36,7 @@ npm.cmd run pdf       # gera trabalho-devops.pdf (usa o Edge ou o Chrome instala
 
 ## Deploy
 
-Push na `main`, testes verdes, `rsync` para `/var/www/2048/releases/<commit>/`, troca do link `current` e conferência de `/version.txt`. Se a versão no ar não bater com o commit, o pipeline faz rollback. Detalhes no [capítulo 08](docs/08-ci-cd.md).
+Planejado (não executado, sem servidor): push na `main`, testes verdes, `rsync` para `/var/www/2048/releases/<commit>/`, troca do link `current` e conferência de `/version.txt`. Se a versão no ar não bater com o commit, o pipeline faz rollback. Detalhes no [capítulo 08](docs/08-ci-cd.md).
 
 Configuração necessária no repositório:
 

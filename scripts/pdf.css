@@ -9,6 +9,8 @@
   --code-bg: #f4f6f8;
   --pending: #b42318;
   --pending-bg: #fef3f2;
+  --not-run: #8a4b00;
+  --not-run-bg: #fff6e5;
 }
 
 html { font-size: 10.5pt; }
@@ -56,6 +58,7 @@ figcaption { font-size: 0.85rem; color: var(--muted); margin-top: 0.3rem; }
 
 blockquote { margin: 0.8rem 0; padding: 0.4rem 0.9rem; border-left: 4px solid var(--rule); color: var(--muted); }
 blockquote.pending { border-left-color: var(--pending); background: var(--pending-bg); color: var(--pending); }
+blockquote.not-run { border-left-color: var(--not-run); background: var(--not-run-bg); color: var(--not-run); }
 
 .missing-image {
   display: block;
