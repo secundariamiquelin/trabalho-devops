@@ -6,9 +6,8 @@ Fazer com que um `git push` na branch `main` leve a mudança ao servidor sem que
 
 ## Repositório
 
-**Link:** _a preencher_ (`https://github.com/<usuário>/trabalho-devops`)
+**Link:** <https://github.com/secundariamiquelin/trabalho-devops>
 
-> **PENDENTE:** colocar o link real do repositório aqui e na capa.
 
 | Pasta | Conteúdo |
 |---|---|

@@ -8,11 +8,11 @@
 |---|---|
 | Autor(a) | _a preencher_ |
 | Disciplina / turma | _a preencher_ |
-| Repositório | _a preencher (link do GitHub)_ |
+| Repositório | <https://github.com/secundariamiquelin/trabalho-devops> |
 | Endereço público do app | _a preencher (http://IP-público/)_ |
 | Data de entrega | _a preencher_ |
 
-> **PENDENTE:** preencher a tabela acima com nome, turma, link do repositório e endereço público antes de gerar o PDF final.
+> **PENDENTE:** preencher a tabela acima com nome, turma e endereço público antes de gerar o PDF final.
 
 **Como este documento foi produzido:** os capítulos foram escritos em Markdown, na pasta `docs/` do repositório. O script `scripts/build-pdf.mjs` junta todos num único PDF (`npm run pdf`). Ele converte o Markdown com a biblioteca `marked`, desenha os diagramas Mermaid num navegador sem interface (Edge ou Chrome, controlado pelo `puppeteer-core`) e imprime em A4. Títulos, blocos de código e imagens saem iguais aos do Markdown.
 
