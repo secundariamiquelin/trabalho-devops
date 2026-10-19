@@ -11,9 +11,6 @@
 | Turma | ADS2 |
 | Repositório | <https://github.com/secundariamiquelin/trabalho-devops> |
 | Endereço público do app | Não publicado: a conta na Oracle Cloud não foi criada (capítulos 02 e 09) |
-| Data de entrega | _a preencher_ |
-
-> **PENDENTE:** preencher a data de entrega.
 
 **Como este documento foi produzido:** os capítulos foram escritos em Markdown, na pasta `docs/` do repositório. O script `scripts/build-pdf.mjs` junta todos num único PDF (`npm run pdf`). Ele converte o Markdown com a biblioteca `marked`, desenha os diagramas Mermaid num navegador sem interface (Edge ou Chrome, controlado pelo `puppeteer-core`) e imprime em A4. Títulos, blocos de código e imagens saem iguais aos do Markdown.
 
